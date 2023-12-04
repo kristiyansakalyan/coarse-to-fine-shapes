@@ -138,14 +138,13 @@ def pcwrite(filename, xyz, rgb=None):
         )
 
 
-"""
-Matplotlib Visualization 
-"""
+"""Matplotlib Visualization"""
 
 
 def visualize_voxels(out_file, voxels, num_shown=16, threshold=0.5):
-    r"""Visualizes voxel data.
-    show only first num_shown
+    """Visualizes voxel data.
+
+    Show only first num_shown
     """
     batch_size = voxels.shape[0]
     voxels = voxels.squeeze(1) > threshold
