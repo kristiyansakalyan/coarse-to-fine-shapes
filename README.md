@@ -4,6 +4,7 @@
 
 ### Prerequisites
 
+- Python 3.8
 - Download [pretrained models](https://drive.google.com/drive/folders/1Q7aSaTr6lqmo8qx80nIm1j28mOHAHGiM) into `./pretrained-models/`
 - Download [dataset](https://drive.google.com/drive/folders/1MMRp7mMvRj8-tORDaGTJvrAeCMYTWU2j) into `./data/`
 
