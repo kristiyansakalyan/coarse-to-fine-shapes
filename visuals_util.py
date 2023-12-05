@@ -1,4 +1,19 @@
+from typing import List, Optional, Tuple
 import numpy as np
+import torch
+import matplotlib.pyplot as plt
+
+
+def load_pvd_output(filename: str) -> np.ndarray:
+    """
+    Loads the final output pointcloud of the Point-Voxel CNN from a file.
+    """
+    return torch.load(filename, map_location=torch.device("cpu")).numpy()[-1, :, :]
+
+
+airplane = load_pvd_output("airplane_pc_data.pth")
+car = load_pvd_output("car_pc_data.pth")
+chair = load_pvd_output("chair_pc_data.pth")
 
 
 def rotate_point_cloud_x(point_cloud, angle_degrees):
@@ -38,3 +53,75 @@ def rotate_point_cloud_z(point_cloud, angle_degrees):
     )
     rotated_points = np.dot(point_cloud, rotation_matrix.T)
     return rotated_points
+
+
+def get_axis_ranges(pc: np.ndarray) -> List[Tuple[float, float]]:
+    """Get the axis ranges for the given pointcloud i.e. the min and max values for each axis
+
+    Args:
+        pc (np.ndarray): pointcloud
+
+    Returns:
+        List[Tuple[float, float]]: axis ranges
+    """
+    max_range = max(pc[:, i].max() - pc[:, i].min() for i in range(3)) / 2.0
+
+    mid_x, mid_y, mid_z = ((pc[:, i].max() + pc[:, i].min()) / 2.0 for i in range(3))
+    return [(m - max_range, m + max_range) for m in [mid_x, mid_y, mid_z]]
+
+
+def visualize_pointcloud(
+    pc: np.ndarray,
+    title: str = "",
+    show_axis: bool = True,
+    axis_ranges: Optional[List[Tuple[float, float]]] = None,
+) -> plt.Figure:
+    """Visualize the given pointcloud
+
+    Args:
+        pc (np.ndarray): pointcloud
+        title (str, optional): Diagram title. Defaults to "".
+        show_axis (bool, optional): Show axis and background. Defaults to True.
+        output (str, optional): Output file, does not save if None. Defaults to None.
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d", facecolor="none")
+
+    pc = rotate_point_cloud_y(pc, -90)
+    pc = rotate_point_cloud_x(pc, 90)
+
+    # Depth color mapping
+    depth = pc[:, 2]
+    depth_colormap = plt.get_cmap("viridis")
+
+    # Plot
+    ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], c=depth, cmap=depth_colormap)
+
+    # Labels
+    if show_axis:
+        ax.set_xlabel("Z")
+        ax.set_ylabel("X")
+        ax.set_zlabel("Y")
+        ax.set_title(title)
+
+    # Setting the aspect ratio
+    if axis_ranges is None:
+        axis_ranges = get_axis_ranges(pc)
+
+    ax.set_xlim(*axis_ranges[0])
+    ax.set_ylim(*axis_ranges[1])
+    ax.set_zlim(*axis_ranges[2])
+
+    if not show_axis:
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
+        ax.axis("off")
+
+    ax.view_init(15, 0)
+
+    return fig
+
+
+def save_fig(fig: plt.Figure, filename: str):
+    fig.savefig(filename, bbox_inches="tight", pad_inches=0, transparent=True, dpi=300)
