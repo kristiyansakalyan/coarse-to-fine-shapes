@@ -18,3 +18,5 @@ poetry.lock
 pyproject.toml
 *.gif
 *.png
+*.drawio.bkp
+*.drawio.dtmp
