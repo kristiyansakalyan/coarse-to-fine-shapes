@@ -13,3 +13,5 @@ data_15k
 pretrained-models
 R2N2
 /env/
+poetry.lock
+pyproject.toml
