@@ -6,6 +6,7 @@ __pycache__
 *.net
 *.npy
 *.npz
+*.gif
 eval_model
 eval_data
 data_generation
