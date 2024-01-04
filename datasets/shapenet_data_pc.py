@@ -89,6 +89,24 @@ class Uniform15KPC(Dataset):
         input_dim=3,
         use_mask=False,
     ):
+        """?
+
+        Args:
+            root_dir (_type_): _description_
+            subdirs (_type_): _description_
+            tr_sample_size (int, optional): _description_. Defaults to 10000.
+            te_sample_size (int, optional): _description_. Defaults to 10000.
+            split (str, optional): _description_. Defaults to "train".
+            scale (float, optional): _description_. Defaults to 1.0.
+            normalize_per_shape (bool, optional): _description_. Defaults to False.
+            box_per_shape (bool, optional): _description_. Defaults to False.
+            random_subsample (bool, optional): _description_. Defaults to False.
+            normalize_std_per_axis (bool, optional): _description_. Defaults to False.
+            all_points_mean (_type_, optional): _description_. Defaults to None.
+            all_points_std (_type_, optional): _description_. Defaults to None.
+            input_dim (int, optional): _description_. Defaults to 3.
+            use_mask (bool, optional): _description_. Defaults to False.
+        """
         self.root_dir = root_dir
         self.split = split
         self.in_tr_sample_size = tr_sample_size
