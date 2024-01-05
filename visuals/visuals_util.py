@@ -11,11 +11,6 @@ def load_pvd_output(filename: str) -> np.ndarray:
     return torch.load(filename, map_location=torch.device("cpu")).numpy()[-1, :, :]
 
 
-airplane = load_pvd_output("airplane_pc_data.pth")
-car = load_pvd_output("car_pc_data.pth")
-chair = load_pvd_output("chair_pc_data.pth")
-
-
 def rotate_point_cloud_x(point_cloud, angle_degrees):
     angle_radians = np.radians(angle_degrees)
     rotation_matrix = np.array(
