@@ -22,8 +22,8 @@ def symmetry_loss(point_cloud, symmetry_plane='xz'):
     
     return torch.mean(torch.norm(point_cloud - mirrored, dim=1)**2)
 
-def composite_loss(point_cloud, neighbors, lambda_smooth, lambda_symmetry):
+def composite_loss(point_cloud, neighbors, lambda_smooth, lambda_symmetry, symmetry_plane='xz'):
     l_smooth = smoothness_loss(point_cloud, neighbors)
-    l_symmetry = symmetry_loss(point_cloud)
+    l_symmetry = symmetry_loss(point_cloud, symmetry_plane=symmetry_plane)
     return lambda_smooth * l_smooth + lambda_symmetry * l_symmetry
 
