@@ -1,6 +1,27 @@
 # Coarse to fine shapes
 
-## Setup
+- [Coarse to fine shapes](#coarse-to-fine-shapes)
+  - [PVD (first step)](#pvd-first-step)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Usage](#usage)
+      - [Generation](#generation)
+      - [Visualization](#visualization)
+  - [Patch-based-refinement (2. step)](#patch-based-refinement-2-step)
+    - [Prerequisites](#prerequisites-1)
+    - [Installation](#installation-1)
+    - [Usage](#usage-1)
+  - [Shape Generation and Completion Through Point-Voxel Diffusion](#shape-generation-and-completion-through-point-voxel-diffusion)
+    - [Requirements](#requirements)
+    - [Data](#data)
+    - [Pretrained models](#pretrained-models)
+    - [Training](#training)
+    - [Testing](#testing)
+    - [Results](#results)
+    - [Reference](#reference)
+    - [Acknowledgement](#acknowledgement)
+
+## PVD (first step)
 
 ### Prerequisites
 
@@ -14,18 +35,29 @@
 - pip: requirements-manual.txt
 - install_requirements.sh
 
-## Usage
+### Usage
 
-### Generation
+#### Generation
 
 - Sample new shapes: inference_generation.py
 
-### Visualization
+#### Visualization
+
+- ./visuals/visuals_util.py
+- See ipynb in ./old folder for animation
 
 - visualizations.ipynb
 - utils/visualize.py
 - visualize_pointcloud_trajectory
 - Point clouds in {airplane,car,char}\_3d_pc.pth
+
+## Patch-based-refinement (2. step)
+
+### Prerequisites
+
+### Installation
+
+### Usage
 
 ## Shape Generation and Completion Through Point-Voxel Diffusion
 
