@@ -4,7 +4,6 @@ output
 __pycache__
 *.png
 *.net
-*.npy
 *.npz
 *.gif
 eval_model
@@ -20,3 +19,4 @@ pyproject.toml
 *.png
 *.drawio.bkp
 *.drawio.dtmp
+ShapeNetCore.v2.PC15k

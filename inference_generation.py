@@ -2,7 +2,7 @@ import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
-
+import numpy as np
 import argparse
 from torch.distributions import Normal
 
@@ -515,13 +515,20 @@ def main():
 
     logger.info("Creating model...")
     betas = get_betas(opt.schedule_type, opt.beta_start, opt.beta_end, opt.time_num)
+    logger.info("Loaded betas")
     model = Model(opt, betas, opt.loss_type, opt.model_mean_type, opt.model_var_type)
+    logger.info("Created model")
     
     def _transform_(m):
         return nn.parallel.DataParallel(m)
 
+    logger.info("Moving model to Cuda")
     model = model.cuda()
+    logger.info("Moved model to Cuda")
+
+    logger.info("Adding parallel data wrapper")
     model.multi_gpu_wrapper(_transform_)
+    logger.info("Adding parallel data wrapper")
 
     logger.info("Loading model...")
     
@@ -533,19 +540,20 @@ def main():
     logger.info("Model loaded!")
 
     model.eval()
+    i = 1
     with torch.no_grad():
         # Generate new samples
-        num_chain = 1
+        num_chain = 20
         chain = torch.randn((num_chain, 3, 2048), device="cuda")
 
 
-        # x_gen_eval = model.gen_samples(chain.shape, "cuda", clip_denoised=False)
-        x_gen_list = model.gen_sample_traj(chain.shape, "cuda", freq=40, clip_denoised=False)
-        x_gen_all = torch.cat(x_gen_list, dim=0)
+        x_gen_eval = model.gen_samples(chain.shape, "cuda", clip_denoised=False)
+        # x_gen_list = model.gen_sample_traj(chain.shape, "cuda", freq=40, clip_denoised=False)
+        # x_gen_all = torch.cat(x_gen_list, dim=0)
 
         logger.info("Before 1st visualization")
 
-        prefix = f'inference_generation/{opt.category}_'
+        # prefix = f'inference_generation/{opt.category}_'
         # visualize_pointcloud_batch(f'{prefix}samples_eval.png',
         #                             x_gen_eval.transpose(1, 2), None, None,
         #                             None)
@@ -557,16 +565,25 @@ def main():
         #                             None,
         #                             None)
         
-        logger.info("Before 3rd visualization - gif")
+        # logger.info("Before 3rd visualization - gif")
 
-        visualize_pointclod_trajectory(f'{prefix}sample_trajectory.gif',  x_gen_all.transpose(1, 2))
+        # visualize_pointclod_trajectory(f'{prefix}sample_trajectory.gif',  x_gen_all.transpose(1, 2))
+        folder = "02691156"
+        if opt.category == "car":
+            folder = "02958343"
+        elif opt.category == "chair":
+            folder = "03001627"
 
-        torch.save(x_gen_all.transpose(1, 2), f"{opt.category}_pc_data.pth")
+        for sample in x_gen_eval:
+            numpy_array = sample.cpu().numpy()
+            # torch.save(sample.transpose(1, 2), f"/custom-dataset/sample-{i}_pc_data.pth")
+            np.save(f"./custom-dataset/{folder}/sample-{i}.npy", numpy_array)
+            i += 1
 
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataroot', default='data_15k_1sample/three-categories')
+    parser.add_argument('--dataroot', default='ShapeNetCore.v2.PC15k')
     parser.add_argument('--category', default='airplane')
 
     parser.add_argument('--bs', type=int, default=16, help='input batch size')

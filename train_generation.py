@@ -426,8 +426,8 @@ class Model(nn.Module):
         assert data.dtype == torch.float
         assert t.shape == torch.Size([B]) and t.dtype == torch.int64
 
-        logger.info(f"Called denoise for data shape {data.shape}")
-
+        # logger.info(f"Called denoise for data shape {data.shape}")
+        
         out = self.model(data, t)
 
         assert out.shape == torch.Size([B, D, N])
@@ -795,7 +795,7 @@ def main():
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataroot', default='data_15k_1sample/three-categories')
+    parser.add_argument('--dataroot', default='ShapeNetCore.v2.PC15k')
     parser.add_argument('--category', default='airplane')
 
     parser.add_argument('--bs', type=int, default=16, help='input batch size')

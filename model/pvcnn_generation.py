@@ -224,6 +224,10 @@ class PVCNN2Base(nn.Module):
 
     def forward(self, inputs, t):
 
+        # print(f"T: {t.shape}; Inputs: {inputs.shape}; Embed_dim: {self.embed_dim}")
+        # print(f"Shape of input to lienar: {self.get_timestep_embedding(t, inputs.device).shape}")
+        # print(f"Shape of output: {self.embedf(self.get_timestep_embedding(t, inputs.device))}")
+
         temb =  self.embedf(self.get_timestep_embedding(t, inputs.device))[:,:,None].expand(-1,-1,inputs.shape[-1])
 
         # inputs : [B, in_channels + S, N]
