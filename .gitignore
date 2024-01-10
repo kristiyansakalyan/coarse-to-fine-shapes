@@ -20,3 +20,6 @@ pyproject.toml
 *.drawio.bkp
 *.drawio.dtmp
 ShapeNetCore.v2.PC15k
+
+/**/build/
+/**/dist/
