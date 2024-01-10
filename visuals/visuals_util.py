@@ -174,3 +174,56 @@ def visualize_pointcloud_eval(
 
     plt.tight_layout()
     return fig
+
+def visualize_pointcloud_eval_three(
+    pc1: np.ndarray, pc2: np.ndarray, pc3: np.ndarray,
+    title1: str = "", title2: str = "", title3: str = "",
+    show_axis: bool = True,
+    axis_ranges: Optional[List[Tuple[float, float]]] = None,
+) -> plt.Figure:
+    """Visualize two given pointclouds side by side.
+
+    Args:
+        pc1, pc2, pc2 (np.ndarray): Pointclouds to be visualized.
+        title1, title2, title3 (str, optional): Titles for the diagrams. Defaults to "".
+        show_axis (bool, optional): Show axis and background. Defaults to True.
+        axis_ranges (Optional[List[Tuple[float, float]]], optional): Axis ranges. Defaults to None.
+    """
+    fig, axes = plt.subplots(1, 3, subplot_kw={'projection': '3d', 'facecolor': 'none'}, figsize=(12, 6))
+
+    for ax, pc, title in zip(axes, [pc1, pc2, pc3], [title1, title2, title3]):
+        pc = rotate_point_cloud_y(pc, -90)
+        pc = rotate_point_cloud_x(pc, 90)
+
+        # Depth color mapping
+        depth = pc[:, 2]
+        depth_colormap = plt.get_cmap("viridis")
+
+        # Plot
+        ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], c=depth, cmap=depth_colormap)
+
+        # Labels and title
+        if show_axis:
+            ax.set_xlabel("Z")
+            ax.set_ylabel("X")
+            ax.set_zlabel("Y")
+            ax.set_title(title)
+
+        # Setting the aspect ratio
+        if axis_ranges is None:
+            axis_ranges = get_axis_ranges(pc)
+
+        ax.set_xlim(*axis_ranges[0])
+        ax.set_ylim(*axis_ranges[1])
+        ax.set_zlim(*axis_ranges[2])
+
+        if not show_axis:
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_zticks([])
+            ax.axis("off")
+
+        ax.view_init(15, 0)
+
+    plt.tight_layout()
+    return fig
