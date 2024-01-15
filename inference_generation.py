@@ -542,43 +542,44 @@ def main():
     model.eval()
     i = 1
     with torch.no_grad():
-        # Generate new samples
-        num_chain = 20
-        chain = torch.randn((num_chain, 3, 2048), device="cuda")
+       for _ in range(4):
+            # Generate new samples
+            num_chain = 100
+            chain = torch.randn((num_chain, 3, 2048), device="cuda")
 
 
-        x_gen_eval = model.gen_samples(chain.shape, "cuda", clip_denoised=False)
-        # x_gen_list = model.gen_sample_traj(chain.shape, "cuda", freq=40, clip_denoised=False)
-        # x_gen_all = torch.cat(x_gen_list, dim=0)
+            x_gen_eval = model.gen_samples(chain.shape, "cuda", clip_denoised=False)
+            # x_gen_list = model.gen_sample_traj(chain.shape, "cuda", freq=40, clip_denoised=False)
+            # x_gen_all = torch.cat(x_gen_list, dim=0)
 
-        logger.info("Before 1st visualization")
+            logger.info("Before 1st visualization")
 
-        # prefix = f'inference_generation/{opt.category}_'
-        # visualize_pointcloud_batch(f'{prefix}samples_eval.png',
-        #                             x_gen_eval.transpose(1, 2), None, None,
-        #                             None)
-        
-        # logger.info("Before 2nd visualization")
+            # prefix = f'inference_generation/{opt.category}_'
+            # visualize_pointcloud_batch(f'{prefix}samples_eval.png',
+            #                             x_gen_eval.transpose(1, 2), None, None,
+            #                             None)
+            
+            # logger.info("Before 2nd visualization")
 
-        # visualize_pointcloud_batch(f'{prefix}samples_eval_all.png',
-        #                             x_gen_all.transpose(1, 2), None,
-        #                             None,
-        #                             None)
-        
-        # logger.info("Before 3rd visualization - gif")
+            # visualize_pointcloud_batch(f'{prefix}samples_eval_all.png',
+            #                             x_gen_all.transpose(1, 2), None,
+            #                             None,
+            #                             None)
+            
+            # logger.info("Before 3rd visualization - gif")
 
-        # visualize_pointclod_trajectory(f'{prefix}sample_trajectory.gif',  x_gen_all.transpose(1, 2))
-        folder = "02691156"
-        if opt.category == "car":
-            folder = "02958343"
-        elif opt.category == "chair":
-            folder = "03001627"
+            # visualize_pointclod_trajectory(f'{prefix}sample_trajectory.gif',  x_gen_all.transpose(1, 2))
+            folder = "02691156"
+            if opt.category == "car":
+                folder = "02958343"
+            elif opt.category == "chair":
+                folder = "03001627"
 
-        for sample in x_gen_eval:
-            numpy_array = sample.cpu().numpy()
-            # torch.save(sample.transpose(1, 2), f"/custom-dataset/sample-{i}_pc_data.pth")
-            np.save(f"./custom-dataset/{folder}/sample-{i}.npy", numpy_array)
-            i += 1
+            for sample in x_gen_eval:
+                numpy_array = sample.cpu().numpy()
+                # torch.save(sample.transpose(1, 2), f"/custom-dataset/sample-{i}_pc_data.pth")
+                np.save(f"./custom-dataset/{folder}/sample-{i}.npy", numpy_array)
+                i += 1
 
 def parse_args():
 
