@@ -218,7 +218,7 @@ class GaussianDiffusion:
         assert isinstance(shape, (tuple, list))
         img_t = noise_fn(size=shape, dtype=torch.float, device=device)
         for t in reversed(range(0, final_time if not keep_running else len(self.betas))):
-            logger.info(f"Sampling for timestep: {t}")
+            logger.info(f"Sampling for timestep: {t}; with shape: {shape}")
             img_t = constrain_fn(img_t, t)
             t_ = torch.empty(shape[0], dtype=torch.int64, device=device).fill_(t)
             img_t = self.p_sample(denoise_fn=denoise_fn, data=img_t,t=t_, noise_fn=noise_fn,
@@ -408,7 +408,7 @@ def evaluate_gen(opt, ref_pcs, logger):
     if ref_pcs is None:
         _, test_dataset = get_dataset(opt.dataroot, opt.npoints, opt.category, use_mask=False)
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=opt.batch_size,
-                                                      shuffle=False, num_workers=int(opt.workers), drop_last=False)
+                                                      shuffle=False, num_workers=int(opt.workers), drop_last=True)
         ref = []
         logger.info("Evaluate generation")
         for data in tqdm(test_dataloader, total=len(test_dataloader), desc='Generating Samples'):
@@ -422,6 +422,9 @@ def evaluate_gen(opt, ref_pcs, logger):
     logger.info("Loading sample path: %s"
       % (opt.eval_path))
     sample_pcs = torch.load(opt.eval_path).contiguous()
+
+    # sample_pcs = sample_pcs[:50, :, :]
+    # ref_pcs = ref_pcs[:50, :, :]
 
     logger.info("Generation sample size:%s reference size: %s"
           % (sample_pcs.size(), ref_pcs.size()))
@@ -523,7 +526,7 @@ def main(opt):
 
 
         ref = None
-        if opt.generate:
+        if bool(opt.generate):
             opt.eval_path = os.path.join(outf_syn, 'samples.pth')
             Path(opt.eval_path).parent.mkdir(parents=True, exist_ok=True)
             ref=generate(model, opt)
@@ -543,11 +546,11 @@ def parse_args():
     parser.add_argument('--workers', type=int, default=16, help='workers')
     parser.add_argument('--niter', type=int, default=10000, help='number of epochs to train for')
 
-    parser.add_argument('--generate',default=True)
+    parser.add_argument('--generate',default=False)
     parser.add_argument('--eval_gen', default=True)
 
     parser.add_argument('--nc', default=3)
-    parser.add_argument('--npoints', default=2048 * 4)
+    parser.add_argument('--npoints', default=2048)
     '''model'''
     parser.add_argument('--beta_start', default=0.0001)
     parser.add_argument('--beta_end', default=0.02)
