@@ -86,7 +86,7 @@ def visualize_pointcloud(
     pc = rotate_point_cloud_x(pc, 90)
 
     # Depth color mapping
-    depth = pc[:, 2]
+    depth = pc[:, 0]
     depth_colormap = plt.get_cmap("viridis")
 
     # Plot
