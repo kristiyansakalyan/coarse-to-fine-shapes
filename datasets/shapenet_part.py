@@ -2,17 +2,40 @@ import numpy as np
 import os
 from torch.utils.data import Dataset
 import torch
-from pointnet_util import pc_normalize
 import json
 
+def pc_normalize(point_set):
+    """
+    Normalize the point cloud.
+    Centers the point cloud at the origin and scales it to have a maximum extent of 1.
+
+    Args:
+        point_set (np.array): The point cloud data. Shape (N, 3), where N is the number of points.
+
+    Returns:
+        np.array: The normalized point cloud data.
+    """
+    centroid = np.mean(point_set, axis=0)
+    point_set = point_set - centroid
+    furthest_distance = np.max(np.sqrt(np.sum(point_set ** 2, axis=1)))
+    point_set = point_set / furthest_distance
+    return point_set
+
+
 class PartNormalDataset(Dataset):
-    def __init__(self, root='./data/shapenetcore_partanno_segmentation_benchmark_v0_normal', npoints=2048, split='train', class_choice=None, normal_channel=False):
+    def __init__(self, 
+                 root='./data/shapenetcore_partanno_segmentation_benchmark_v0_normal', 
+                 npoints=2048, 
+                 split='train', 
+                 class_choice=None, 
+                 normal_channel=False,
+                 normalize_per_shape=False):
         self.npoints = npoints
         self.root = root
         self.catfile = os.path.join(self.root, 'synsetoffset2category.txt')
         self.cat = {}
         self.normal_channel = normal_channel
-
+        self.normalize_per_shape = normalize_per_shape
 
         with open(self.catfile, 'r') as f:
             for line in f:
@@ -21,9 +44,9 @@ class PartNormalDataset(Dataset):
         self.cat = {k: v for k, v in self.cat.items()}
         self.classes_original = dict(zip(self.cat, range(len(self.cat))))
 
-        if not class_choice is  None:
+        if class_choice is not None:
             self.cat = {k:v for k,v in self.cat.items() if k in class_choice}
-        # print(self.cat)
+        print(self.cat)
 
         self.meta = {}
         with open(os.path.join(self.root, 'train_test_split', 'shuffled_train_file_list.json'), 'r') as f:
@@ -77,6 +100,20 @@ class PartNormalDataset(Dataset):
         self.cache = {}  # from index to (point_set, cls, seg) tuple
         self.cache_size = 20000
 
+        if not self.normalize_per_shape:
+            # Compute the global mean and std for normalization across the dataset
+            all_points = []
+            for _, path in self.datapath:
+                data = np.loadtxt(path).astype(np.float32)
+                if not normal_channel:
+                    all_points.append(data[:, 0:3])
+                else:
+                    all_points.append(data[:, 0:6])
+
+        all_points = np.concatenate(all_points, axis=0)
+        self.global_mean = np.mean(all_points, axis=0)
+        self.global_std = np.std(all_points, axis=0)
+
 
     def __getitem__(self, index):
         if index in self.cache:
@@ -92,10 +129,17 @@ class PartNormalDataset(Dataset):
             else:
                 point_set = data[:, 0:6]
             seg = data[:, -1].astype(np.int32)
+
+
+            if self.normalize_per_shape:
+                point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
+            else:
+                point_set[:, 0:3] = (point_set[:, 0:3] - self.global_mean) / self.global_std
+
+
             if len(self.cache) < self.cache_size:
                 self.cache[index] = (point_set, cls, seg)
-        point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-
+            
         choice = np.random.choice(len(seg), self.npoints, replace=True)
         # resample
         point_set = point_set[choice, :]
