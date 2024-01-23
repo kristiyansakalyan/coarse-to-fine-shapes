@@ -4,6 +4,8 @@ from torch.utils.data import Dataset
 import torch
 import json
 
+from visuals.visuals_util import rotate_point_cloud_y
+
 def pc_normalize(point_set):
     """
     Normalize the point cloud.
@@ -135,6 +137,9 @@ class PartNormalDataset(Dataset):
                 point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
             else:
                 point_set[:, 0:3] = (point_set[:, 0:3] - self.global_mean) / self.global_std
+            
+            # Rotate so that we have the same alignment as in the other datasets
+            point_set[:, 0:3] = rotate_point_cloud_y(point_set[:, 0:3], 90)
 
 
             if len(self.cache) < self.cache_size:
