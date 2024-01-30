@@ -27,3 +27,4 @@ ShapeNetCore.v2.PC15k
 /**/dist/
 output-models
 shapenetcore_partanno_segmentation_benchmark_v0_normal/
+score_denoise/
