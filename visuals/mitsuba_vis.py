@@ -36,7 +36,7 @@ xml_head = """
 
 xml_ball_segment = """
     <shape type="sphere">
-        <float name="radius" value="0.02"/>
+        <float name="radius" value="{radius}"/>
         <transform name="toWorld">
             <translate x="{}" y="{}" z="{}"/>
             <scale value="0.7"/>
@@ -90,7 +90,7 @@ def _standardize_bbox(pcl, points_per_object):
     return result
 
 
-def _mitsuba(pcl, path, fov, clr):
+def _mitsuba(pcl, path, fov, clr, radius=0.02):
     xml_segments = [xml_head.format(fov)]
 
     pcl = _standardize_bbox(pcl, 2048)
@@ -106,12 +106,14 @@ def _mitsuba(pcl, path, fov, clr):
         if h < -0.25:
             xml_segments.append(
                 xml_ball_segment.format(
-                    pcl[i, 0], pcl[i, 1], pcl[i, 2] - h - 0.6875, *color
+                    pcl[i, 0], pcl[i, 1], pcl[i, 2] - h - 0.6875, *color, radius=radius
                 )
             )
         else:
             xml_segments.append(
-                xml_ball_segment.format(pcl[i, 0], pcl[i, 1], pcl[i, 2], *color)
+                xml_ball_segment.format(
+                    pcl[i, 0], pcl[i, 1], pcl[i, 2], *color, radius=radius
+                )
             )
     xml_segments.append(xml_tail)
 
@@ -121,8 +123,8 @@ def _mitsuba(pcl, path, fov, clr):
         f.write(xml_content)
 
 
-def render_mitsuba(point_cloud, filepath, fov=15,clr=None):
-    _mitsuba(point_cloud, filepath, fov, clr)
+def render_mitsuba(point_cloud, filepath, fov=15, clr=None, radius=0.02):
+    _mitsuba(point_cloud, filepath, fov, clr, radius)
 
     mi.set_variant("scalar_rgb")
 
@@ -133,3 +135,33 @@ def render_mitsuba(point_cloud, filepath, fov=15,clr=None):
     img = mi.render(scene)
 
     return img
+
+
+if __name__ == "__main__":
+    import os
+    import sys
+    import argparse
+    import time
+    import torch
+    import matplotlib.pyplot as plt
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", type=str)
+    parser.add_argument("--output", type=str)
+    parser.add_argument("--fov", type=float, default=15)
+    parser.add_argument("--clr", type=float, nargs=3, default=None)
+    parser.add_argument("--radius", type=float, default=0.02)
+    args = parser.parse_args()
+
+    if not os.path.exists(args.input):
+        print("Input file does not exist.")
+        sys.exit(1)
+
+    input = torch.load(args.input).cpu().numpy().squeeze()
+    start = time.time()
+    img = render_mitsuba(input, args.output, args.fov, args.clr)
+    plt.axis("off")
+    plt.imshow(img ** (1.0 / 2.2))
+    # approximate sRGB tonemapping
+    plt.savefig(args.output, bbox_inches="tight", pad_inches=0, dpi=400)
+    print("Time elapsed: {}s".format(time.time() - start))
