@@ -4,11 +4,11 @@ import modules.functional as F
 
 def get_repulsion_loss4(pred, nsample=20, radius=0.07):
     # pred: (batch_size, npoint, 3)
-    idx = F.ball_query(pred, pred, radius, nsample)
+    idx = F.ball_query(pred.transpose(1,2), pred.transpose(1,2), radius, nsample)
 
     # Grouping operation in PyTorch
-    grouped_pred = F.grouping(pred, idx)  # (batch_size, npoint, nsample, 3)
-    grouped_pred -= pred.unsqueeze(3)
+    grouped_pred = F.grouping(pred.transpose(1,2), idx)  # (batch_size, npoint, nsample, 3)
+    grouped_pred -= pred.transpose(1,2).unsqueeze(3)
 
     # Calculate the uniform loss
     h = 0.03
