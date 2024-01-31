@@ -4,6 +4,18 @@ import torch
 import matplotlib.pyplot as plt
 
 
+def prep_pointcloud_for_plot(pointcloud):
+    """
+    Prepares a point cloud for plotting.
+    :param pointcloud: Point cloud to prepare.
+    :return: Prepared point cloud.
+    """
+    # Convert to numpy
+    pointcloud = pointcloud.cpu().numpy()
+    # Transpose to (N, 3)
+    return pointcloud.squeeze()
+
+
 def load_pvd_output(filename: str) -> np.ndarray:
     """
     Loads the final output pointcloud of the Point-Voxel CNN from a file.
@@ -79,6 +91,7 @@ def visualize_pointcloud(
         show_axis (bool, optional): Show axis and background. Defaults to True.
         output (str, optional): Output file, does not save if None. Defaults to None.
     """
+    pc = prep_pointcloud_for_plot(pc)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d", facecolor="none")
 
@@ -138,6 +151,7 @@ def visualize_pointcloud_eval(
         show_axis (bool, optional): Show axis and background. Defaults to True.
         axis_ranges (Optional[List[Tuple[float, float]]], optional): Axis ranges. Defaults to None.
     """
+    pc1, pc2 = (prep_pointcloud_for_plot(pc) for pc in (pc1, pc2))
     fig, axes = plt.subplots(
         1, 2, subplot_kw={"projection": "3d", "facecolor": "none"}, figsize=(12, 6)
     )
@@ -198,6 +212,7 @@ def visualize_pointcloud_eval_three(
         show_axis (bool, optional): Show axis and background. Defaults to True.
         axis_ranges (Optional[List[Tuple[float, float]]], optional): Axis ranges. Defaults to None.
     """
+    pc1, pc2, pc3 = (prep_pointcloud_for_plot(pc) for pc in (pc1, pc2, pc3))
     fig, axes = plt.subplots(
         1, 3, subplot_kw={"projection": "3d", "facecolor": "none"}, figsize=(12, 6)
     )
