@@ -20,7 +20,7 @@ def export_pointcloud_to_pts(tensor, filename):
     """
     filename = add_extension_if_missing(filename, ".pts")
     # Ensure the tensor is on CPU and convert to numpy
-    numpy_pc = tensor.cpu().numpy()
+    numpy_pc = tensor.squeeze().cpu().numpy()
 
     # Open file and write points
     with open(filename, "w", encoding="utf-8") as file:
@@ -39,7 +39,7 @@ def export_pointcloud_to_asc(tensor, filename):
     """
     filename = add_extension_if_missing(filename, ".asc")
     # Ensure the tensor is on CPU and convert to numpy
-    numpy_pc = tensor.cpu().numpy()
+    numpy_pc = tensor.squeeze().cpu().numpy()
 
     # Open file and write points
     with open(filename, "w", encoding="utf-8") as file:
