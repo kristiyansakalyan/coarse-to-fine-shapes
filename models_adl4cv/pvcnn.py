@@ -205,16 +205,16 @@ class PVCNNUp(nn.Module):
             out_features_list.append(features)
         out_features_list.append(features.max(dim=-1, keepdim=True).values.repeat([1, 1, num_points]))
 
-        print(len(out_features_list))
+        # print(len(out_features_list))
 
-        for feature in out_features_list:
-            print(feature.shape)
+        # for feature in out_features_list:
+            # print(feature.shape)
 
         out_features_concatenated = torch.cat(out_features_list, dim=1)
-        print(out_features_concatenated.shape)
+        # print(out_features_concatenated.shape)
 
         out_features_concatenated = torch.cat([out_features_concatenated] * self.up_ratio, dim=-1)
-        print(out_features_concatenated.shape)
+        # print(out_features_concatenated.shape)
         # Can't we here concatenate two times the out_features_list and then try to apply the classifier
         # It's exactly the same as in the PU-Net :D
         
