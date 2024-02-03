@@ -634,7 +634,6 @@ class PVCNNUpPointAttention(nn.Module):
         coords = features[:, :3, :]
         coords_reshaped = coords.permute(0, 2, 1).unsqueeze(-1)  # Reshape to [B, 3, N, 1] for 2D convolutions
 
-
         out_features_list = [one_hot_vectors]
         for i in range(len(self.point_features)):
             features, xyz = self.point_features[i]((features, coords))
@@ -678,6 +677,91 @@ class PVCNNUpPointAttention(nn.Module):
         output = self.upsampler(new_points_concatenated)
         output = self.attn3(output, xyz=xyz_new)
         output = self.upsampler_last(output)
+
+        return output.squeeze(-1)
+ 
+
+
+# TODO: We need one PVCNN to encode the patches and feed them to the diffusion model...
+# TODO: We need another one to actually predict the noise...
+# TODO: Maybe we can combine that and train both simultaneously on the noise loss..., who knows!?
+class PVCNNDiffusion(nn.Module):
+    blocks = ((64, 1, 32), (128, 2, 16), (512, 1, None), (2048, 1, None))
+
+    def __init__(self, num_classes, num_shapes, extra_feature_channels=3,
+                 width_multiplier=1, voxel_resolution_multiplier=1, up_ratio=2, attention=False, attn_dim=512):
+        super().__init__()
+        assert extra_feature_channels >= 0
+        self.in_channels = extra_feature_channels + 3
+        self.num_shapes = num_shapes
+        self.up_ratio = up_ratio
+        self.use_attn = attention
+
+        layers, channels_point, concat_channels_point = create_pointnet_components(
+            blocks=self.blocks, in_channels=self.in_channels, with_se=True, normalize=False,
+            width_multiplier=width_multiplier, voxel_resolution_multiplier=voxel_resolution_multiplier,
+            attention=attention
+        )
+        self.point_features = nn.ModuleList(layers)
+
+        # Attention on different feature levels
+        attention_feature_layers = []
+        for in_ch in [64, 128, 128, 512, 2048]:
+            attention_feature_layers.append(PointAttention(in_ch, attn_dim, 20))
+
+        self.attention_features = nn.ModuleList(attention_feature_layers)
+
+        conv_in = num_shapes + channels_point + concat_channels_point
+
+        
+        self.classifier1 = nn.Sequential(
+            nn.Conv2d(in_channels=conv_in, out_channels=256, kernel_size=(1, 1), stride=(1, 1)),
+            nn.GroupNorm(8, 256),
+        )
+        self.attn1 = Attention(256, 8, D=2, pos_enc=True)
+
+        self.classifier2 = nn.Sequential(
+            nn.Conv2d(in_channels=256, out_channels=128, kernel_size=(1, 1), stride=(1, 1)),
+            nn.GroupNorm(8, 128),
+        )
+        self.attn2 = Attention(128, 8, D=2, pos_enc=True)
+
+        self.classifier3 = nn.Conv2d(in_channels=128, out_channels=64, kernel_size=(1, 1), stride=(1, 1))
+        self.attn3 = Attention(64, 8, D=2, pos_enc=True)
+
+        self.classifier4 = nn.Conv2d(in_channels=64, out_channels=num_classes, kernel_size=(1, 1), stride=(1, 1))
+
+    def forward(self, inputs):
+        # inputs : [B, in_channels + S, N]
+        features = inputs[:, :self.in_channels, :]
+        one_hot_vectors = inputs[:, -self.num_shapes:, :]
+        num_points = features.size(-1)
+
+        coords = features[:, :3, :]
+        coords_reshaped = coords.permute(0, 2, 1).unsqueeze(-1)  # Reshape to [B, 3, N, 1] for 2D convolutions
+
+
+        out_features_list = [one_hot_vectors]
+        for i in range(len(self.point_features)):
+            features, xyz = self.point_features[i]((features, coords))
+            features, _ = self.attention_features[i](xyz, features)
+            out_features_list.append(features)
+        
+        out_features_list.append(features.max(dim=-1, keepdim=True).values.repeat([1, 1, num_points]))
+
+        out_features_concatenated = torch.cat(out_features_list, dim=1)
+
+
+        features = self.classifier1(out_features_concatenated.unsqueeze(-1))
+        features = self.attn1(features, xyz=coords_reshaped)
+
+        features = self.classifier2(features)
+        features = self.attn2(features,  xyz=coords_reshaped)
+
+        features = self.classifier3(features)
+        features = self.attn3(features, xyz=coords_reshaped)
+
+        output = self.classifier4(features)
 
         return output.squeeze(-1)
  
