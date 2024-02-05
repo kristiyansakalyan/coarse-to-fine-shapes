@@ -90,10 +90,10 @@ def _standardize_bbox(pcl, points_per_object):
     return result
 
 
-def _mitsuba(pcl, path, fov, clr, radius=0.02):
+def _mitsuba(pcl, path, fov, clr, radius=0.02, n_points=2048):
     xml_segments = [xml_head.format(fov)]
 
-    pcl = _standardize_bbox(pcl, 2048)
+    pcl = _standardize_bbox(pcl, n_points)
     pcl = pcl[:, [2, 0, 1]]
     pcl[:, 0] *= -1
     h = np.min(pcl[:, 2])
@@ -123,8 +123,8 @@ def _mitsuba(pcl, path, fov, clr, radius=0.02):
         f.write(xml_content)
 
 
-def render_mitsuba(point_cloud, filepath, fov=15, clr=None, radius=0.02):
-    _mitsuba(point_cloud, filepath, fov, clr, radius)
+def render_mitsuba(point_cloud, filepath, fov=15, clr=None, radius=0.02, n_points=2048):
+    _mitsuba(point_cloud, filepath, fov, clr, radius, n_points=n_points)
 
     mi.set_variant("scalar_rgb")
 

@@ -249,5 +249,3 @@ class PVCNN2Base(nn.Module):
             features, coords, temb = fp_blocks((jump_coords, coords, torch.cat([features,temb],dim=1), fump_feats, temb))
 
         return self.classifier(features)
-
-

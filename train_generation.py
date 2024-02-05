@@ -256,7 +256,6 @@ class GaussianDiffusion:
         assert isinstance(shape, (tuple, list))
         img_t = noise_fn(size=shape, dtype=torch.float, device=device)
         for t in reversed(range(0, self.num_timesteps if not keep_running else len(self.betas))):
-            logger.info(f"Sampling timestep: {t}")
             t_ = torch.empty(shape[0], dtype=torch.int64, device=device).fill_(t)
             img_t = self.p_sample(denoise_fn=denoise_fn, data=img_t,t=t_, noise_fn=noise_fn,
                                   clip_denoised=clip_denoised, return_pred_xstart=False)
@@ -280,7 +279,6 @@ class GaussianDiffusion:
         img_t = noise_fn(size=shape, dtype=torch.float, device=device)
         imgs = [img_t]
         for t in reversed(range(0,total_steps)):
-            logger.info(f"Sampling timestep: {t}")
 
             t_ = torch.empty(shape[0], dtype=torch.int64, device=device).fill_(t)
             img_t = self.p_sample(denoise_fn=denoise_fn, data=img_t, t=t_, noise_fn=noise_fn,
@@ -428,6 +426,8 @@ class Model(nn.Module):
 
         # logger.info(f"Called denoise for data shape {data.shape}")
         
+        # TODO: Somehow encode the data.
+
         out = self.model(data, t)
 
         assert out.shape == torch.Size([B, D, N])
