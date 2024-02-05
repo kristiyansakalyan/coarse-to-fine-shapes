@@ -132,7 +132,7 @@ def non_overlapping_spectral_patches(point_cloud: torch.Tensor, patch_size, k=10
         logging.warning(
             f"point_cloud size not a multiple of patch_size, creating {n_clusters} clusters"
         )
-    pc_np = point_cloud.detach().numpy()
+    pc_np = point_cloud.detach().cpu().numpy()
 
     is_connected = False
     while not is_connected:
