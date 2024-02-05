@@ -253,3 +253,97 @@ def visualize_pointcloud_eval_three(
 
     plt.tight_layout()
     return fig
+
+
+def visualize_pointcloud_patches(
+    pcs: List[np.ndarray],
+    title: str = "",
+    show_axis: bool = True,
+) -> plt.Figure:
+    """Visualize the given list of pointclouds, each in a different color.
+
+    Args:
+        pcs (List[np.ndarray]): List of point clouds in Nx3 format.
+        title (str, optional): Diagram title. Defaults to "".
+        show_axis (bool, optional): Show axis and background. Defaults to True.
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d", facecolor="none")
+
+    cmap = plt.get_cmap("Set1", len(pcs))
+
+    # Concatenate all point clouds to find global min and max for axis ranges
+    all_points = np.concatenate(pcs, axis=0)
+    min_vals, max_vals = np.min(all_points, axis=0), np.max(all_points, axis=0)
+
+    # Use the overall min and max to set the axis limits
+    max_range = (
+        np.array(
+            [
+                max_vals[0] - min_vals[0],
+                max_vals[1] - min_vals[1],
+                max_vals[2] - min_vals[2],
+            ]
+        ).max()
+        / 2.0
+    )
+    mid_x = (max_vals[0] + min_vals[0]) * 0.5
+    mid_y = (max_vals[1] + min_vals[1]) * 0.5
+    mid_z = (max_vals[2] + min_vals[2]) * 0.5
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
+
+    for i, pc in enumerate(pcs):
+        pc = rotate_point_cloud_y(pc, -90)
+        pc = rotate_point_cloud_x(pc, 90)
+        color = cmap(i / len(pcs))
+        ax.scatter(
+            pc[:, 0], pc[:, 1], pc[:, 2], c=[color] * len(pc), s=1
+        )  # Adjust point size as needed
+
+    # Labels and title
+    if show_axis:
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.set_title(title)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
+        ax.axis("off")
+
+    ax.view_init(15, 30)
+
+    return fig
+
+
+def print_statistical_summary(values):
+    """
+    Prints the statistical summary of a list of integer values.
+
+    Parameters:
+    - values: List[int]. A list of integer values.
+
+    The summary includes the mean, standard deviation, minimum, maximum,
+    and the 10th and 90th percentiles.
+    """
+    # Ensuring the input is a numpy array for efficient computation
+    values_array = np.array(values)
+
+    # Calculating statistical metrics
+    mean_val = np.mean(values_array)
+    std_val = np.std(values_array, ddof=0)  # Population std; set ddof=1 for sample std
+    min_val = np.min(values_array)
+    max_val = np.max(values_array)
+    percentile_10 = np.percentile(values_array, 10)
+    percentile_90 = np.percentile(values_array, 90)
+
+    # Printing the statistical summary
+    print(f"Mean: {mean_val}")
+    print(f"Standard Deviation: {std_val}")
+    print(f"Minimum: {min_val}")
+    print(f"Maximum: {max_val}")
+    print(f"10th Percentile: {percentile_10}")
+    print(f"90th Percentile: {percentile_90}")
