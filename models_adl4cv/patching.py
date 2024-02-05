@@ -1,10 +1,12 @@
 import torch
-
+import numpy as np
 from pytorch3d.ops import knn_points
 from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster import SpectralClustering
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse import csr_matrix
+import random
+import logging
 
 
 def get_nearest_neighbors_batch_pytorch3d(batch, N):
@@ -111,32 +113,32 @@ def generate_non_overlapping_patches(batch, patch_size=512):
 
 
 def pointcloud_kn_graph(point_cloud: np.ndarray, k=10):
-    """Compute the k-NN graph of a point cloud using sklearn's kneighbors_graph."""
     A = kneighbors_graph(point_cloud, n_neighbors=k, include_self=True, mode="distance")
     A = A.tocsr()
     return A
 
 
-def generate_patches_spectral(point_cloud: torch.Tensor, patch_size, k=10):
-    """Generate non-overlapping patches from a point cloud using spectral clustering.
+def random_spectral_patch(*args, **kwargs):
+    return random.choice(non_overlapping_spectral_patches(*args, **kwargs))
 
-    Args:
-        point_cloud: Tensor of size [num_points, num_channels]
-        patch_size: Size of each patch
-        k: Number of nearest neighbors to consider for the k-NN graph
-    Returns:
-        A list of tensors, each *ON AVERAGE* size [patch_size, num_channels]"""
-    assert (
-        point_cloud.shape[0] % patch_size == 0
-    ), "point_cloud size not a multiple of patch_size"
+
+def random_spectral_patch_batch(batch, *args, **kwargs):
+    return [random_spectral_patch(pc, *args, **kwargs) for pc in batch]
+
+
+def non_overlapping_spectral_patches(point_cloud: torch.Tensor, patch_size, k=10):
     n_clusters = point_cloud.shape[0] // patch_size
+    if point_cloud.shape[0] % patch_size != 0:
+        logging.warning(
+            f"point_cloud size not a multiple of patch_size, creating {n_clusters} clusters"
+        )
     pc_np = point_cloud.detach().numpy()
 
     is_connected = False
     while not is_connected:
         # k-NN graph
         A = pointcloud_kn_graph(pc_np, k)
-        n_components, _ = connected_components(
+        n_components, labels_components = connected_components(
             csgraph=A, directed=False, return_labels=True
         )
         is_connected = n_components == 1
@@ -167,17 +169,8 @@ def generate_patches_spectral(point_cloud: torch.Tensor, patch_size, k=10):
     ]
 
 
-def generate_non_overlapping_patches_spectral(batch, patch_size=512, k=10):
-    """Generate non-overlapping patches from a point cloud batch using spectral clustering.
-
-    Args:
-        batch: Tensor of size [batch_size, num_points, num_channels]
-        patch_size: Intended size of each patch
-        k: Number of nearest neighbors to consider for the k-NN graph
-    Returns:
-        A list of list of tensors of patches. The outer list has length batch_size, and the inner list has length
-            num_points // patch_size. Each tensor has *ON AVERAGE* size [patch_size, num_channels].
-    """
+def non_overlapping_spectral_patches_batch(batch, patch_size=512, k=10):
     return [
-        generate_patches_spectral(point_cloud, patch_size, k) for point_cloud in batch
+        non_overlapping_spectral_patches(point_cloud, patch_size, k)
+        for point_cloud in batch
     ]
