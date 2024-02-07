@@ -6,6 +6,7 @@
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
   - [Usage](#usage)
+    - [Training](#training)
   - [License](#license)
   - [Contributors](#contributors)
   - [Acknowledgments](#acknowledgments)
@@ -32,6 +33,10 @@ This repository is based off the official [Point Voxel Diffusion implementation]
 - See `pip-requirements.txt`
 
 ## Usage
+
+### Training
+
+See notebooks for [airplane](./train_PVCNN_Upsample-Noise-Global-Chair-Attention-Upsampler-Patch-Based-Airplane.ipynb) and [chair](./train_PVCNN_Upsample-Noise-Global-Chair-Attention-Upsampler-Patch-Based.ipynb)
 
 ## License
 
