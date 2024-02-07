@@ -62,13 +62,9 @@ class Attention(nn.Module):
 
         h = x
 
-        # print(f"Attention: x {x.shape}; xyz: {xyz.shape}")
-
         # Apply positional encodings if provided
         if xyz is not None:
             pos_enc = self.pos_enc(xyz.transpose(1,2))
-            # print(f"Attention: x {x.shape}; pos_enc: {pos_enc.shape}")
-
             h += pos_enc  # Add positional encodings to the input features
 
 
@@ -77,20 +73,11 @@ class Attention(nn.Module):
         k = self.k(h).reshape(B,C,-1)
         v = self.v(h).reshape(B,C,-1)
 
-
-        # print(f"After q,k,v: q {q.shape},  k {k.shape},  v {v.shape}")
-
         qk = torch.matmul(q.permute(0, 2, 1), k) #* (int(C) ** (-0.5))
-
-        # print(f"After qk: qk {qk.shape}")
 
         w = self.sm(qk)
 
-        # print(f"After w: w {w.shape}")
-
         h = torch.matmul(v, w.permute(0, 2, 1)).reshape(B,C,*x.shape[2:])
-
-        # print(f"After h: h {h.shape}")
 
         h = self.out(h)
 
@@ -122,8 +109,6 @@ class PointAttention(nn.Module):
         
     # xyz: b x n x 3, features: b x n x f
     def forward(self, xyz, features):
-
-        # print(f"Attention | xyz: {xyz.shape}; features: {features.shape}")
         
         xyz = xyz.transpose(1,2)
         features = features.transpose(1,2)
@@ -134,31 +119,18 @@ class PointAttention(nn.Module):
         
         pre = features
 
-        # print("After all bs above")
         x = self.fc1(features)
-        # print(f"After conv3d: {x.shape}")
         q, k, v = self.w_qs(x), index_points(self.w_ks(x), knn_idx), index_points(self.w_vs(x), knn_idx)
 
-        # print("After qkv")
-
-        # print("KNN_XYZ Shape: ", knn_xyz.shape)
-
         pos_enc = self.fc_delta(xyz[:, :, None] - knn_xyz)  # b x n x k x f
-        # print("After pos_enc")
-        
-        # print(q[:, :, None].shape, k.shape, pos_enc.shape)
 
         attn = self.fc_gamma(q[:, :, None] - k + pos_enc)
-        # print("After fc_gamma")
         
         attn = torch.nn.functional.softmax(attn / np.sqrt(k.size(-1)), dim=-2)  # b x n x k x f
-        # print("After softmax")
-        
+
         res = torch.einsum('bmnf,bmnf->bmf', attn, v + pos_enc)
-        # print("After einsum")
 
         res = self.fc2(res) + pre
-        # print("Finished attention")
         
         return res.transpose(1,2), attn
     
@@ -181,9 +153,6 @@ class PVConv(nn.Module):
             nn.GroupNorm(8, out_channels) if attention else nn.BatchNorm3d(out_channels, eps=1e-4),
             Swish() if attention else nn.LeakyReLU(0.1, True),
          ]
-        
-        # if self.use_attn:
-        #     self.attention = PointAttention(out_channels, attention_dim, attention_knn)
 
         if with_se:
             voxel_layers.append(SE3d(out_channels))
@@ -194,12 +163,6 @@ class PVConv(nn.Module):
         features, coords = inputs
         voxel_features, voxel_coords = self.voxelization(features, coords)
         voxel_features = self.voxel_layers(voxel_features)
-
-        # print(f"PVConv | voxel_features: {voxel_features.shape}")
-
-        # if self.use_attn:
-        #     res, attn = self.attention(coords, voxel_features)
-
         voxel_features = F.trilinear_devoxelize(voxel_features, voxel_coords, self.resolution, self.training)
         fused_features = voxel_features + self.point_features(features)
         return fused_features, coords
@@ -357,10 +320,6 @@ class PVCNNUp(nn.Module):
             attention=attention
         )
         self.point_features = nn.ModuleList(layers)
-        # layers, _ = create_mlp_components(in_channels=(num_shapes + channels_point + concat_channels_point),
-        #                                   out_channels=[256, 0.2, 256, 0.2, 128, num_classes],
-        #                                   classifier=True, dim=2, width_multiplier=width_multiplier)
-        # self.classifer = nn.Sequential(*layers)
 
         conv_in = num_shapes + channels_point + concat_channels_point
 
@@ -374,17 +333,10 @@ class PVCNNUp(nn.Module):
             Attention(128, 8, D=2) if self.use_attn else Swish(),
         )
 
-
-        # self.upsampler = nn.Sequential(
-        #     nn.Conv1d(128, 64, 1),
-        #     nn.Conv1d(64, num_classes, 1),
-        # )
-
         in_c = 128
         if self.up_ratio > 1:
             in_c = in_c + self.up_ratio
 
-        # TODO: Maybe add attention here as well
         self.upsampler = nn.Sequential(
             nn.Conv2d(in_channels=in_c, out_channels=64, kernel_size=(1, 1), stride=(1, 1)),
             nn.GroupNorm(8, 64),
@@ -404,15 +356,7 @@ class PVCNNUp(nn.Module):
             features, _ = self.point_features[i]((features, coords))
             out_features_list.append(features)
         out_features_list.append(features.max(dim=-1, keepdim=True).values.repeat([1, 1, num_points]))
-
-        # print(len(out_features_list))
-
-        # for feature in out_features_list:
-            # print(feature.shape)
-
         out_features_concatenated = torch.cat(out_features_list, dim=1)
-
-        # print(out_features_concatenated.shape)
 
         new_points = []
         for i in range(self.up_ratio):
@@ -427,12 +371,6 @@ class PVCNNUp(nn.Module):
             new_points.append(features)
 
         new_points_concatenated = torch.cat(new_points, dim=2)
-        
-        # print(new_points[0].shape, new_points_concatenated.shape)
-
-        # Can't we here concatenate two times the out_features_list and then try to apply the classifier
-        # It's exactly the same as in the PU-Net :D
-        
         output = self.upsampler(new_points_concatenated)
 
         return output.squeeze(-1)
@@ -456,10 +394,6 @@ class PVCNNUpPositionalEncodings(nn.Module):
             attention=attention
         )
         self.point_features = nn.ModuleList(layers)
-        # layers, _ = create_mlp_components(in_channels=(num_shapes + channels_point + concat_channels_point),
-        #                                   out_channels=[256, 0.2, 256, 0.2, 128, num_classes],
-        #                                   classifier=True, dim=2, width_multiplier=width_multiplier)
-        # self.classifer = nn.Sequential(*layers)
 
         attention_feature_layers = []
 
@@ -487,18 +421,10 @@ class PVCNNUpPositionalEncodings(nn.Module):
 
         self.attn2 = Attention(128, 8, D=2, pos_enc=True)
 
-
-        # self.upsampler = nn.Sequential(
-        #     nn.Conv1d(128, 64, 1),
-        #     nn.Conv1d(64, num_classes, 1),
-        # )
-
         in_c = 128
         if self.up_ratio > 1:
             in_c = in_c + self.up_ratio
 
-        # TODO: Maybe add attention here as well
-        # TODO: Maybe in_c -> 256 -> 128 -> num_classes
         self.upsampler = nn.Sequential(
             nn.Conv2d(in_channels=in_c, out_channels=64, kernel_size=(1, 1), stride=(1, 1)),
             nn.GroupNorm(8, 64),
@@ -523,14 +449,7 @@ class PVCNNUpPositionalEncodings(nn.Module):
             out_features_list.append(features)
         out_features_list.append(features.max(dim=-1, keepdim=True).values.repeat([1, 1, num_points]))
 
-        # print(len(out_features_list))
-
-        # for feature in out_features_list:
-            # print(feature.shape)
-
         out_features_concatenated = torch.cat(out_features_list, dim=1)
-
-        # print(out_features_concatenated.shape)
 
         new_points = []
         for i in range(self.up_ratio):
@@ -549,11 +468,6 @@ class PVCNNUpPositionalEncodings(nn.Module):
             new_points.append(features)
 
         new_points_concatenated = torch.cat(new_points, dim=2)
-        
-        # print(new_points[0].shape, new_points_concatenated.shape)
-
-        # Can't we here concatenate two times the out_features_list and then try to apply the classifier
-        # It's exactly the same as in the PU-Net :D
         
         output = self.upsampler(new_points_concatenated)
 
@@ -605,12 +519,6 @@ class PVCNNUpPointAttention(nn.Module):
 
         self.attn2 = Attention(128, 8, D=2, pos_enc=True)
 
-
-        # self.upsampler = nn.Sequential(
-        #     nn.Conv1d(128, 64, 1),
-        #     nn.Conv1d(64, num_classes, 1),
-        # )
-
         in_c = 128
         if self.up_ratio > 1:
             in_c = in_c + self.up_ratio
@@ -634,20 +542,10 @@ class PVCNNUpPointAttention(nn.Module):
         for i in range(len(self.point_features)):
             features, xyz = self.point_features[i]((features, coords))
             features, _ = self.attention_features[i](xyz, features)
-            # print(f"After attention: {features.shape}")
             out_features_list.append(features)
         out_features_list.append(features.max(dim=-1, keepdim=True).values.repeat([1, 1, num_points]))
-        # print(features.max(dim=-1, keepdim=True).values.repeat([1, 1, num_points]).shape)
-
-        # print(len(out_features_list))
-
-        # for feature in out_features_list:
-            # print(feature.shape)
 
         out_features_concatenated = torch.cat(out_features_list, dim=1)
-        # print(out_features_concatenated.shape)
-
-        # print(out_features_concatenated.shape)
 
         new_points = []
         for i in range(self.up_ratio):
@@ -670,7 +568,6 @@ class PVCNNUpPointAttention(nn.Module):
         new_points_concatenated = torch.cat(new_points, dim=2)
         
         xyz_new = torch.cat([coords_reshaped] * self.up_ratio, dim=1)
-
 
         output = self.upsampler(new_points_concatenated)
         output = self.attn3(output, xyz=xyz_new)
