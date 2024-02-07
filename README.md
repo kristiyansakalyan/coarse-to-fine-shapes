@@ -11,7 +11,6 @@
   - [License](#license)
   - [Contributors](#contributors)
   - [Acknowledgments](#acknowledgments)
-  - [PVD (first step)](#pvd-first-step)
 
 ## About the project
 
@@ -58,8 +57,3 @@ See [License.md](LICENSE.md).
 ## Acknowledgments
 
 Thank you to our supervisor Lei Li.
-
-## PVD (first step)
-
-- Download [pretrained models](https://drive.google.com/drive/folders/1Q7aSaTr6lqmo8qx80nIm1j28mOHAHGiM) into `./pretrained-models/`
-- Download [dataset](https://drive.google.com/drive/folders/1MMRp7mMvRj8-tORDaGTJvrAeCMYTWU2j) into `./data/`
