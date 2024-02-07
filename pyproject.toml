@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "coarse-to-fine-shapes"
+version = "0.1.0"
+description = ""
+authors = ["Kristiyan Sakalyan"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tqdm = "4.32.1"
+trimesh = "3.7.12"
+scipy = "1.5.1"
+gdown = "^4.7.1"
+rich = "^13.7.0"
+pillow = "^10.1.0"
+nvitop = "^1.3.2"
+matplotlib = "3.4"
+ipympl = "^0.9.3"
+ipython = "8.0"
+imageio = "^2.33.1"
+pytz = "^2023.3.post1"
+pyyaml = "^6.0.1"
+open3d = "^0.18.0"
+tensorboard = "2.8.0"
+mitsuba = "^3.5.0"
+cgal = "^5.6.post202401251120"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

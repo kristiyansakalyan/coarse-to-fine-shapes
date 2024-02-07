@@ -15,8 +15,6 @@ data_15k
 pretrained-models
 R2N2
 /env/
-poetry.lock
-pyproject.toml
 *.gif
 *.png
 *.drawio.bkp
