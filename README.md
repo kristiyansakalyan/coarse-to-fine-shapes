@@ -7,6 +7,7 @@
     - [Installation](#installation)
   - [Usage](#usage)
     - [Training](#training)
+  - [Results](#results)
   - [License](#license)
   - [Contributors](#contributors)
   - [Acknowledgments](#acknowledgments)
@@ -36,7 +37,15 @@ This repository is based off the official [Point Voxel Diffusion implementation]
 
 ### Training
 
-See notebooks for [airplane](./train_PVCNN_Upsample-Noise-Global-Chair-Attention-Upsampler-Patch-Based-Airplane.ipynb) and [chair](./train_PVCNN_Upsample-Noise-Global-Chair-Attention-Upsampler-Patch-Based.ipynb)
+See notebooks for [airplane](./train_PVCNN_Upsample-Noise-Global-Chair-Attention-Upsampler-Patch-Based-Airplane.ipynb) and [chair](./train_PVCNN_Upsample-Noise-Global-Chair-Attention-Upsampler-Patch-Based.ipynb).
+For dataset follow instructions at [PointFlow](https://github.com/stevenygd/PointFlow)
+
+## Results
+
+|                              Input                               |                              Output                               |
+| :--------------------------------------------------------------: | :---------------------------------------------------------------: |
+| ![input airplane](./eval-results/visuals/Input-Airplane-PVD.png) | ![input airplane](./eval-results/visuals/Output-Airplane-PVD.png) |
+|  ![input airplane](./eval-results/visuals/Input-Chair-PVD.png)   |  ![input airplane](./eval-results/visuals/Output-Chair-PVD.png)   |
 
 ## License
 
